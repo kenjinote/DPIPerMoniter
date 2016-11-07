@@ -9,7 +9,7 @@ TCHAR szClassName[] = TEXT("Window");
 BOOL GetScaling(HWND hWnd, UINT* pnX, UINT* pnY)
 {
 	BOOL bSetScaling = FALSE;
-	HMONITOR hMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+	const HMONITOR hMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
 	if (hMonitor)
 	{
 		HMODULE hShcore = LoadLibrary(TEXT("SHCORE"));
@@ -53,11 +53,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		hBitmap = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP1));
 		SendMessage(hWnd, WM_DPICHANGED, 0, 0);
 		break;
+	case WM_NCCREATE:
+		{
+			typedef BOOL(WINAPI*fnTypeEnableNCScaling)(HWND);
+			const HMODULE hModUser32 = GetModuleHandle(TEXT("user32.dll"));
+			if (hModUser32)
+			{
+				const fnTypeEnableNCScaling fnEnableNCScaling = (fnTypeEnableNCScaling)GetProcAddress(hModUser32, "EnableNonClientDpiScaling");
+				if (fnEnableNCScaling)
+				{
+					fnEnableNCScaling(hWnd);
+				}
+			}
+			return DefWindowProc(hWnd, msg, wParam, lParam);
+		}
 	case WM_PAINT:
 		{
 			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hWnd, &ps);
-			HDC hdcMem = CreateCompatibleDC(hdc);
+			const HDC hdc = BeginPaint(hWnd, &ps);
+			const HDC hdcMem = CreateCompatibleDC(hdc);
 			SelectObject(hdcMem, hBitmap);
 			BITMAP bm;
 			GetObject(hBitmap, sizeof(BITMAP), &bm);
@@ -101,7 +115,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPSTR pCmdLine, int nCmdShow)
 {
 	MSG msg;
-	WNDCLASS wndclass = {
+	const WNDCLASS wndclass = {
 		CS_HREDRAW | CS_VREDRAW,
 		WndProc,
 		0,
@@ -114,7 +128,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPSTR pCmdLine, int 
 		szClassName
 	};
 	RegisterClass(&wndclass);
-	HWND hWnd = CreateWindow(
+	const HWND hWnd = CreateWindow(
 		szClassName,
 		TEXT("Window"),
 		WS_OVERLAPPEDWINDOW,
@@ -134,5 +148,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPSTR pCmdLine, int 
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-	return msg.wParam;
+	return (int)msg.wParam;
 }
