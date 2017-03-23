@@ -91,6 +91,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				ReleaseDC(NULL, hdc);
 			}
 		}
+		{
+			TCHAR szText[1024];
+			wsprintf(szText, TEXT("åªç›ÇÃDPI uDpiX = %d(%d%%), uDpiY = %d(%d%%)"), uDpiX, SCALEX(100), uDpiY, SCALEY(100));
+			SetWindowText(hWnd, szText);
+		}
 		DeleteObject(hFont);
 		hFont = CreateFont(-POINT2PIXEL(10), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("ÉÅÉCÉäÉI"));
 		SendMessage(hEdit, WM_SETFONT, (WPARAM)hFont, 0);
